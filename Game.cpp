@@ -9,6 +9,12 @@ void Game::init(int turtleCount)
 {
   initStatic();
   initTurtles(turtleCount);
+  pauseText.setFont(scoreBoard.getFont());
+  pauseText.setString("PAUSE");
+  sf::FloatRect pauseTextBounds = pauseText.getLocalBounds();
+  pauseText.setPosition(
+      sf::Vector2f((win.getSize().x - pauseTextBounds.width) / 2,
+                   200));
   initialised = true;
 }
 
@@ -43,41 +49,39 @@ void Game::initStatic(void)
   pl6.setPosition(sf::Vector2f(winSize.x - pl5.boundingBox().width,
                               pl5.boundingBox().top));
   platforms.push_back(pl6);
+  std::sort(platforms.begin(), platforms.end(),
+            [](Platform &p1, Platform &p2) {
+              return p1.getPosition().x < p2.getPosition().x;
+            });
   //////////////////////////////// Pipes //////////////////////////////////////
-  Pipe pi1(Pipe::Kind::NORMAL, 0);
-  pi1.setPosition(
-      sf::Vector2f(0, floor.boundingBox().top - pi1.boundingBox().height));
-  pipes.push_back(pi1);
-  Pipe pi2(Pipe::Kind::NORMAL, 1);
-  pi2.setPosition(
-      sf::Vector2f(winSize.x - pi2.boundingBox().width,
-                   pi1.boundingBox().top));
-  pipes.push_back(pi2);
-  Pipe pi3(Pipe::Kind::S_SHAPED, 0);
-  pi3.setPosition(
+  pipes[0] = Pipe(Pipe::Kind::NORMAL, 0);
+  pipes[0].setPosition(
+      sf::Vector2f(0,
+                   floor.boundingBox().top - pipes[0].boundingBox().height));
+  pipes[1] = Pipe(Pipe::Kind::NORMAL, 1);
+  pipes[1].setPosition(
+      sf::Vector2f(winSize.x - pipes[1].boundingBox().width,
+                   pipes[0].boundingBox().top));
+  pipes[2] = Pipe(Pipe::Kind::S_SHAPED, 0);
+  pipes[2].setPosition(
       sf::Vector2f(0,
                    pl5.boundingBox().top -
-                    pi3.boundingBox().height * 9.f / 8.f));
-  pipes.push_back(pi3);
-  Pipe pi4(Pipe::Kind::S_SHAPED, 1);
-  pi4.setPosition(
-      sf::Vector2f(winSize.x - pi4.boundingBox().width,
-                   pi3.boundingBox().top));
-  pipes.push_back(pi4);
+                    pipes[2].boundingBox().height * 9.f / 8.f));
+  pipes[3] = Pipe(Pipe::Kind::S_SHAPED, 1);
+  pipes[3].setPosition(
+      sf::Vector2f(winSize.x - pipes[3].boundingBox().width,
+                   pipes[2].boundingBox().top));
 }
 
 void Game::initTurtles(int turtleCount)
 {
   sf::Vector2u winSize = win.getSize();
-  for (int i = 0; i < turtleCount; ++i)
-  {
-    Turtle *turtle = new Turtle();
-    turtle->setPosition(sf::Vector2f(150 * i,
-                                     floor.boundingBox().top -
-                                     turtle->boundingBox().height));
-    // TODO: Set turtle initial position
-    turtles.emplace_back(turtle);
-  }
+  Turtle *turtle = new Turtle();
+  turtle->setPosition(
+      sf::Vector2f(600,
+                   floor.boundingBox().top - turtle->boundingBox().height));
+  // TODO: Set turtle initial position
+  turtles.emplace_back(turtle);
 }
 
 void Game::mainMenu(void)
@@ -90,22 +94,69 @@ void Game::playing(void)
   for (auto turtle : turtles)
   {
     turtle->draw(win);
-    turtle->move(sf::Vector2f(1e-1f, 0.f));
+    if (clock.getElapsedTime().asSeconds() >= 0.095)
+    {
+      turtle->step(clock.restart());
+      sf::FloatRect bounds = turtle->boundingBox();
+      if ((bounds.left < 0) ||
+          ((bounds.left + bounds.width) > win.getSize().x))
+      {
+        if (bounds.top >= (floor.boundingBox().top - bounds.height))
+        {
+          sf::Vector2f newPos;
+          newPos.y = pipes[2].boundingBox().top;
+          newPos.x = bounds.left < 0 ?
+                      pipes[2].boundingBox().width - bounds.width / 2 :
+                      pipes[3].boundingBox().left - bounds.width / 2;
+          turtle->setPosition(newPos);
+          turtle->setFalling(true);
+        } else if (bounds.left < 0)
+          turtle->setPosition(sf::Vector2f(5, bounds.top));
+        else
+          turtle->setPosition(sf::Vector2f(win.getSize().x - bounds.width - 5,
+                                           bounds.top));
+        turtle->setState(Turtle::State::TURNING);
+        continue;
+      }
+      turtle->setFalling(true);
+      for (auto &plat : platforms)
+      {
+        if (bounds.intersects(plat.boundingBox()) && turtle->getFalling())
+        {
+          turtle->setFalling(false);
+          sf::Vector2f newPos(bounds.left, 0);
+          newPos.y = plat.boundingBox().top - bounds.height;
+          turtle->setPosition(newPos);
+          break;
+        }
+      }
+      if (bounds.intersects(floor.boundingBox()) && turtle->getFalling())
+      {
+        turtle->setFalling(false);
+        sf::Vector2f newPos(bounds.left, 0);
+        newPos.y = floor.boundingBox().top - bounds.height;
+        turtle->setPosition(newPos);
+      }
+    }
   }
   for (auto &platform : platforms)
   {
     platform.draw(win);
   }
-  for (auto &pipe : pipes)
+  for (int i = 0; i < 4; ++i)
   {
-    pipe.draw(win);
+    pipes[i].draw(win);
   }
   scoreBoard.draw(win);
   win.display();
 }
 
 void Game::pause(void)
-{}
+{
+  win.draw(pauseText);
+  win.display();
+  clock.restart();
+}
 
 void Game::over(void)
 {}

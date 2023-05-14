@@ -7,6 +7,7 @@ public:
   ScoreBoard(int _lives, int _score);
   void draw(sf::RenderWindow &win);
   void setScore(int score);
+  sf::Font &getFont(void);
   inline int getScore(void) const
   {
     return score;

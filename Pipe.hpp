@@ -7,6 +7,7 @@ public:
     NORMAL,
     S_SHAPED
   };
+  Pipe() = default;
   Pipe(Kind _kind, int _exitSide = 0);
 private:
   sf::Texture texture;

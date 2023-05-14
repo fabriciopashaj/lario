@@ -21,12 +21,14 @@ public:
   void run(void);
 private:
   sf::RenderWindow &win;
+  sf::Clock clock;
   bool initialised = false;
   State state = State::PLAYING;
+  sf::Text pauseText;
   ScoreBoard scoreBoard;
   Floor floor;
   std::vector<Platform> platforms;
-  std::vector<Pipe> pipes;
+  Pipe pipes[4];
   std::list<Turtle *> turtles;
   void handleEvents(void);
   void initTurtles(int turtleCount);

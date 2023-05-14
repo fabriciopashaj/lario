@@ -20,5 +20,5 @@ Platform::Platform(int width)
   sf::IntRect rect(0, 0, brickSize.x * width, brickSize.y);
   sprite.setTextureRect(rect);
   sprite.setTexture(brick);
-  sprite.setScale(7.5f / 10.f, 7.5f / 10.f);
+  sprite.setScale(7.2f / 10.f, 7.2f / 10.f);
 }

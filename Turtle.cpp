@@ -9,21 +9,22 @@ static char const *const texturePaths[] = {
   ".\\assets\\turtle5.png"
 };
 
-static sf::Image images[5][2];
+static sf::Texture textures[5][2];
 static bool initialised = false;
 
-Turtle::Turtle(Turtle::State _state): state(_state)
+Turtle::Turtle(Turtle::State _state)
+  : state(_state), vel(65.f, 0), acc(2.f, 0)
 {
   if (!initialised)
   {
     for (int i = 0; i < 5; ++i)
     {
-      if (images[i][0].loadFromFile(texturePaths[i]))
+      sf::Image image;
+      if (image.loadFromFile(texturePaths[i]))
       {
-        sf::Vector2u imgSize = images[i][0].getSize();
-        images[i][1].create(imgSize.x, imgSize.y);
-        images[i][1].copy(images[i][0], 0, 0);
-        images[i][1].flipHorizontally();
+        textures[i][0].loadFromImage(image);
+        image.flipHorizontally();
+        textures[i][1].loadFromImage(image);
       } else
       {
         // TODO: Throw error
@@ -31,18 +32,22 @@ Turtle::Turtle(Turtle::State _state): state(_state)
     }
     initialised = true;
   }
-  texture.loadFromImage(images[(int)state][heading]);
-  sprite.setTexture(texture);
+  sprite.setTexture(textures[(int)state][heading]);
   sf::Vector2u size = texture.getSize();
   sf::IntRect rect(0, 0, size.x, size.y);
-  sprite.setScale(6.f / 10.f, 6.f / 10.f);
+  sprite.setScale(7.5f / 10.f, 7.5f / 10.f);
 }
 
-void Turtle::setState(Turtle::State _state)
+void Turtle::setState(State _state)
 {
   state = _state;
   setHeading(heading);
-  texture.update(images[(int)_state][heading]);
+  sprite.setTexture(textures[(int)_state][heading]);
+  if (state == State::TURNING)
+  {
+    vel.x *= -1.f;
+    acc.x *= -1.f;
+  }
 }
 
 Turtle::State Turtle::getState(void)
@@ -52,11 +57,50 @@ Turtle::State Turtle::getState(void)
 
 void Turtle::setHeading(int _heading)
 {
-  texture.update(images[(int)state][_heading]);
+  sprite.setTexture(textures[(int)state][_heading]);
   heading = _heading;
 }
 
 int Turtle::getHeading(void)
 {
   return heading;
+}
+
+float Turtle::getAcceleration(void)
+{
+  return acc.x;
+}
+
+void Turtle::setAcceleration(float _acc)
+{
+  acc.x = _acc;
+}
+
+sf::Vector2f Turtle::getVelocity(void)
+{
+  return vel;
+}
+
+void Turtle::setFalling(bool falling)
+{
+  acc.y = falling ? 9.8e3f : 0.f;
+  vel.y = falling * 5 * 9.8e1f;
+}
+
+bool Turtle::getFalling(void)
+{
+  return acc.y != 0;
+}
+
+void Turtle::step(sf::Time elapsed)
+{
+  if (state == State::TURNING)
+  {
+    heading = !heading;
+    state = State::MOVING_1;
+  }
+  move(elapsed.asSeconds() * vel);
+  vel.x += acc.x * elapsed.asSeconds();
+  vel.y += acc.y * elapsed.asSeconds();
+  setState((Turtle::State)(((int)state + 1) % 3));
 }

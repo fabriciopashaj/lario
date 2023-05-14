@@ -54,3 +54,8 @@ void ScoreBoard::draw(sf::RenderWindow &win)
     lifeSprite.move(offset, 0);
   }
 }
+
+sf::Font &ScoreBoard::getFont(void)
+{
+  return font;
+}
