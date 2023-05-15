@@ -9,10 +9,10 @@
 int main(void)
 {
   sf::VideoMode mode = sf::VideoMode::getDesktopMode();
-  int size = std::min(mode.height, mode.width) - 50;
-  sf::RenderWindow win(sf::VideoMode(size, size - 75), "Malario");
+  int size = std::min(mode.height, mode.width) - 30;
+  sf::RenderWindow win(sf::VideoMode(size, size - 75), "Mario");
   Game game(win);
-  game.init(5);
+  game.init();
   game.run();
   return 0;
 }

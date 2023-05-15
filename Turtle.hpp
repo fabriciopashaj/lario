@@ -21,10 +21,11 @@ public:
   void setFalling(bool falling);
   bool getFalling(void);
   void step(sf::Time elapsed);
+  void die(void);
 private:
   Turtle::State state;
-  sf::Texture texture;
   int heading = 0; // 0: right, 1: left
   sf::Vector2f vel;
   sf::Vector2f acc;
+  int moveCount;
 };
